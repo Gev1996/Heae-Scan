@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>NFC Reader und Writer</title>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const log = document.getElementById('log');
+  
+  // NFC-Scan starten
+  document.getElementById('startScan').addEventListener('click', async () => {
+    if ('NDEFReader' in window) {
+      try {
+        const ndef = new NDEFReader();
+        await ndef.scan();
+        log.textContent = "Bereit zum Scannen...";
+
+        ndef.onreadingerror = () => {
+          log.textContent = "Fehler beim Lesen des NFC-Tags.";
+        };
+
+        ndef.onreading = event => {
+          const message = event.message;
+          for (const record of message.records) {
+            log.textContent = `Record-Typ: ${record.recordType}, Daten: ${new TextDecoder().decode(record.data)}`;
+          }
+        };
+      } catch (error) {
+        log.textContent = `Fehler: ${error}`;
+      }
+    } else {
+      log.textContent = "Web NFC wird von diesem Browser nicht unterstützt.";
+    }
+  });
+
+  // Auf NFC-Tag schreiben
+  document.getElementById('writeTag').addEventListener('click', async () => {
+    const text = document.getElementById('textToWrite').value;
+    if ('NDEFReader' in window) {
+      try {
+        const ndef = new NDEFReader();
+        await ndef.write({
+          records: [{ recordType: "text", data: text }]
+        });
+        log.textContent = "Text auf NFC-Tag geschrieben.";
+      } catch (error) {
+        log.textContent = `Fehler: ${error}`;
+      }
+    } else {
+      log.textContent = "Web NFC wird von diesem Browser nicht unterstützt.";
+    }
+  });
+});
+</script>
+</head>
+<body>
+  <button id="startScan">NFC-Scan starten</button>
+  <input type="text" id="textToWrite" placeholder="Text zum Schreiben">
+  <button id="writeTag">Auf NFC-Tag schreiben</button>
+  <p id="log"></p>
+</body>
+</html>
